@@ -231,13 +231,13 @@ def cloudsc(
     with computation(FORWARD), interval(0, -1):
         # === 1: initial values for variables
         # --- initialization of output tendencies
-        out_tnd_loc_t[0, 0, 0] = 0
-        out_tnd_loc_a[0, 0, 0] = 0
-        out_tnd_loc_ql[0, 0, 0] = 0
-        out_tnd_loc_qr[0, 0, 0] = 0
-        out_tnd_loc_qi[0, 0, 0] = 0
-        out_tnd_loc_qs[0, 0, 0] = 0
-        out_tnd_loc_qv[0, 0, 0] = 0
+        out_tnd_loc_t[0, 0, 0] = 0.0
+        out_tnd_loc_a[0, 0, 0] = 0.0
+        out_tnd_loc_ql[0, 0, 0] = 0.0
+        out_tnd_loc_qr[0, 0, 0] = 0.0
+        out_tnd_loc_qi[0, 0, 0] = 0.0
+        out_tnd_loc_qs[0, 0, 0] = 0.0
+        out_tnd_loc_qv[0, 0, 0] = 0.0
 
         # --- non CLV initialization
         t = in_t[0, 0, 0] + dt * in_tnd_tmp_t[0, 0, 0]
@@ -335,26 +335,26 @@ def cloudsc(
         # --- old *diagnostic* mixed phase saturation
         foealfa = f_foealfa(t)
         foeewmt = min(f_foeewm(t) / in_ap[0, 0, 0], 0.5)
-        qsmix = foeewmt / (1 - RETV * foeewmt)
+        qsmix = foeewmt / (1.0 - RETV * foeewmt)
 
         # --- ice saturation T < 273K
         # --- liquid water saturation for T > 273K
         alfa = f_foedelta(t)
-        foeew = min((alfa * f_foeeliq(t) + (1 - alfa) * f_foeeice(t)) / in_ap[0, 0, 0], 0.5)
-        qsice = foeew / (1 - RETV * foeew)
+        foeew = min((alfa * f_foeeliq(t) + (1.0 - alfa) * f_foeeice(t)) / in_ap[0, 0, 0], 0.5)
+        qsice = foeew / (1.0 - RETV * foeew)
 
         # --- liquid water saturation
         foeeliqt = min(f_foeeliq(t) / in_ap[0, 0, 0], 0.5)
-        qsliq = foeeliqt / (1 - RETV * foeeliqt)
+        qsliq = foeeliqt / (1.0 - RETV * foeeliqt)
 
         # --- ensure cloud fraction is between 0 and 1
-        a = max(0, min(1, a))
+        a = max(0.0, min(1.0, a))
 
         # --- calculate liq/ice fractions (no longer a diagnostic relationship)
         li = ql + qi
         if li > RLMIN:
             liqfrac = ql / li
-            icefrac = 1 - liqfrac
+            icefrac = 1.0 - liqfrac
         else:
             liqfrac = 0.0
             icefrac = 0.0
@@ -363,7 +363,7 @@ def cloudsc(
     # --- find tropopause level
     with computation(FORWARD), interval(0, 1):
         tmp_trpaus[0, 0] = 0.1
-        tmp_paphd[0, 0] = 1 / tmp_aph_s[0, 0]
+        tmp_paphd[0, 0] = 1.0 / tmp_aph_s[0, 0]
     with computation(FORWARD), interval(0, -2):
         sig = in_ap[0, 0, 0] * tmp_paphd[0, 0]
         if sig > 0.1 and sig < 0.4 and t[0, 0, 0] > t[0, 0, 1]:
@@ -517,29 +517,29 @@ def cloudsc(
 
             # --- calculate dqs/dT correction factor
             # liquid
-            facw = R5LES / (t - R4LES) ** 2
-            cor = 1 / (1 - RETV * foeeliqt)
+            facw = R5LES / (t - R4LES) ** 2.0
+            cor = 1.0 / (1.0 - RETV * foeeliqt)
             dqsliqdt = facw * cor * qsliq
-            corqsliq = 1 + RALVDCP * dqsliqdt
+            corqsliq = 1.0 + RALVDCP * dqsliqdt
 
             # ice
-            faci = R5IES / (t - R4IES) ** 2
-            cor = 1 / (1 - RETV * foeew)
+            faci = R5IES / (t - R4IES) ** 2.0
+            cor = 1.0 / (1.0 - RETV * foeew)
             dqsicedt = faci * cor * qsice
-            corqsice = 1 + RALSDCP * dqsicedt
+            corqsice = 1.0 + RALSDCP * dqsicedt
 
             # diagnostic mixed
-            fac = foealfa * facw + (1 - foealfa) * faci
-            cor = 1 / (1 - RETV * foeewmt)
+            fac = foealfa * facw + (1.0 - foealfa) * faci
+            cor = 1.0 / (1.0 - RETV * foeewmt)
             dqsmixdt = fac * cor * qsmix
-            corqsmix = 1 + f_foeldcpm(t) * dqsmixdt
+            corqsmix = 1.0 + f_foeldcpm(t) * dqsmixdt
 
             # evaporation/sublimation limits
             evaplimmix = max((qsmix - qv) / corqsmix, 0.0)
             evaplimice = max((qsice - qv) / corqsice, 0.0)
 
             # --- in-cloud condensate amount
-            tmpa = 1 / max(a, EPSEC)
+            tmpa = 1.0 / max(a, EPSEC)
             liqcld = ql * tmpa
             icecld = qi * tmpa
             licld = liqcld + icecld
@@ -562,16 +562,16 @@ def cloudsc(
                 fac = 1.0
                 faci = 1.0
             else:
-                fac = a + fokoop * (1 - a)
+                fac = a + fokoop * (1.0 - a)
                 faci = dt / RKOOPTAU
 
             # calculate supersaturation to add to cloud
-            if a > 1 - RAMIN:
+            if a > 1.0 - RAMIN:
                 supsat = max((qv - fac * qsice) / corqsice, 0.0)
             else:
                 # calculate environmental humidity supersaturation
-                qp1env = (qv - a * qsice) / max(1 - a, EPSILON)
-                supsat = max((1 - a) * (qp1env - fac * qsice) / corqsice, 0.0)
+                qp1env = (qv - a * qsice) / max(1.0 - a, EPSILON)
+                supsat = max((1.0 - a) * (qp1env - fac * qsice) / corqsice, 0.0)
 
             # --- here the supersaturation is turned into liquid water
             if supsat > EPSEC:
@@ -589,7 +589,7 @@ def cloudsc(
                     qifg += supsat
 
                 # increase cloud amount using RKOOPTAU timescale
-                solac = (1 - a) * faci
+                solac = (1.0 - a) * faci
 
             # --- include supersaturation from previous timestep
             if in_supsat[0, 0, 0] > EPSEC:
@@ -607,7 +607,7 @@ def cloudsc(
                     qifg += in_supsat[0, 0, 0]
 
                 # increase cloud amount using RKOOPTAU timescale
-                solac = (1 - a) * faci
+                solac = (1.0 - a) * faci
 
             # *** 3.2: detrainment from convection
             if tmp_klevel[0] < NLEV - 1:
@@ -617,7 +617,7 @@ def cloudsc(
                     solac += lude[0, 0, 0] / in_lu[0, 0, 1]
                     # diagnostic temperature split
                     convsrce_ql = foealfa * lude
-                    convsrce_qi = (1 - foealfa) * lude
+                    convsrce_qi = (1.0 - foealfa) * lude
                     solqa_ql_ql += convsrce_ql
                     solqa_qi_qi += convsrce_qi
                 else:
@@ -632,7 +632,7 @@ def cloudsc(
             # *** 3.3: subsidence compensating convective updraughts
             # --- subsidence source from layer above and evaporation of cloud within the layer
             if tmp_klevel[0] > NCLDTOP - 1:
-                mf = max(0.0, (in_mfu + in_mfd) * dtgdp)
+                mf = max(0.0, (in_mfu[0, 0, 0] + in_mfd[0, 0, 0]) * dtgdp)
                 acust = mf * anew[0, 0, -1]
 
                 if not FALLQL and PHASEQL > 0:
@@ -763,7 +763,7 @@ def cloudsc(
             t = told
 
             # ***: 3.5a: evaporation of clouds
-            if dqs > 0:
+            if dqs > 0.0:
                 levap = min(min(a * min(dqs, licld), evaplimmix), max(qsmix - qv, 0.0))
                 solqa_qv_ql += liqfrac * levap
                 solqa_ql_qv -= liqfrac * levap
@@ -777,8 +777,8 @@ def cloudsc(
 
                 # old limiter
                 if a > 0.99:
-                    cor = 1 / (1 - RETV * qsmix)
-                    cdmax = (qv - qsmix) / (1 + cor * qsmix * f_foedem(t))
+                    cor = 1.0 / (1.0 - RETV * qsmix)
+                    cdmax = (qv - qsmix) / (1.0 + cor * qsmix * f_foedem(t))
                 else:
                     cdmax = (qv - a * qsmix) / a
 
@@ -797,20 +797,20 @@ def cloudsc(
                     qifg += lcond1
 
             # generation of new clouds (da/dt > 0)
-            if dqs <= -RLMIN and a < 1 - EPSEC:
+            if dqs <= -RLMIN and a < 1.0 - EPSEC:
                 # --- critical relative humidity
                 rhc = RAMID
                 sigk = in_ap[0, 0, 0] / tmp_aph_s[0, 0]
                 if sigk > 0.8:
-                    rhc += (1 - RAMID) * ((sigk - 0.8) / 0.2) ** 2
+                    rhc += (1.0 - RAMID) * ((sigk - 0.8) / 0.2) ** 2.0
 
                 # --- supersaturation options
                 if NSSOPT == 0:
                     # no scheme
-                    qe = max(0.0, (qv - a * qsice) / max(EPSEC, 1 - a))
+                    qe = max(0.0, (qv - a * qsice) / max(EPSEC, 1.0 - a))
                 elif NSSOPT == 1:
                     # Tompkins
-                    qe = max(0.0, (qv - a * qsice) / max(EPSEC, 1 - a))
+                    qe = max(0.0, (qv - a * qsice) / max(EPSEC, 1.0 - a))
                 elif NSSOPT == 2:
                     # Lohmann and Karcher
                     qe = qv
@@ -826,17 +826,17 @@ def cloudsc(
                     fac = fokoop
 
                 if qe >= rhc * qsice * fac and qe < qsice * fac:
-                    acond = -(1 - a) * fac * dqs / max(2 * (fac * qsice - qe), EPSEC)
-                    acond = min(acond, 1 - a)
+                    acond = -(1.0 - a) * fac * dqs / max(2.0 * (fac * qsice - qe), EPSEC)
+                    acond = min(acond, 1.0 - a)
 
                     # linear term
                     lcond2 = -fac * dqs * 0.5 * acond
 
                     # new limiter formulation
-                    zdl = 2 * (fac * qsice - qe) / max(EPSEC, 1 - a)
+                    zdl = 2.0 * (fac * qsice - qe) / max(EPSEC, 1.0 - a)
                     expr2 = fac * dqs
                     if expr2 < -zdl:
-                        lcondlim = (a - 1) * expr2 - fac * qsice + qv
+                        lcondlim = (a - 1.0) * expr2 - fac * qsice + qv
                         lcond2 = min(lcond2, lcondlim)
                     lcond2 = max(lcond2, 0.0)
 
@@ -872,11 +872,11 @@ def cloudsc(
                 if t < RTT and qlfg > RLMIN:
                     vpice = f_foeeice(t) * RV / RD
                     vpliq = vpice * fokoop
-                    icenuclei = 1000 * exp(12.96 * (vpliq - vpice) / vpliq - 0.639)
+                    icenuclei = 1000.0 * exp(12.96 * (vpliq - vpice) / vpliq - 0.639)
 
                     # --- 0.024 is conductivity of air
                     # --- 8.8 = 700 ** (1/3) = density of ice to the third
-                    add = RLSTT * (RLSTT / (RV * t) - 1) / (0.024 * t)
+                    add = RLSTT * (RLSTT / (RV * t) - 1.0) / (0.024 * t)
                     bdd = RV * t * in_ap[0, 0, 0] / (2.21 * vpice)
                     cvds = (
                         7.8
@@ -898,10 +898,10 @@ def cloudsc(
                     depos = min(depos, qlfg)
 
                     # --- at top of cloud, reduce deposition rate near cloud top
-                    infactor = min(icenuclei / 15000, 1.0)
+                    infactor = min(icenuclei / 15000.0, 1.0)
                     depos *= min(
                         infactor
-                        + (1 - infactor)
+                        + (1.0 - infactor)
                         * (RDEPLIQREFRATE + tmp_cldtopdist[0, 0] / RDEPLIQREFDEPTH),
                         1.0,
                     )
@@ -914,29 +914,31 @@ def cloudsc(
             elif DEPICE == 2:  # --- ice deposition assuming ice PSD
                 # --- calculate distance from cloud top
                 if a[0, 0, -1] < RCLDTOPCF and a[0, 0, 0] >= RCLDTOPCF:
-                    tmp_cldtopdist = 0.0
+                    tmp_cldtopdist[0, 0] = 0.0
                 else:
-                    tmp_cldtopdist += dp / (rho * RG)
+                    tmp_cldtopdist[0, 0] += dp / (rho * RG)
 
                 # --- only treat depositional growth if liquid present
                 if t < RTT and qlfg > RLMIN:
                     vpice = f_foeeice(t) * RV / RD
                     vpliq = vpice * fokoop
-                    icenuclei = 1000 * exp(12.96 * (vpliq - vpice) / vpliq - 0.639)
+                    icenuclei = 1000.0 * exp(12.96 * (vpliq - vpice) / vpliq - 0.639)
 
                     # --- RICEINIT=1e-12 is the initial mass of ice particle
                     ice0 = max(icecld, icenuclei * RICEINIT / rho)
 
                     # particle size distribution
-                    tcg = 1
-                    facx1i = 1
-                    apb = RCL_APB1 * vpice - RCL_APB2 * vpice * t + in_ap * RCL_APB3 * t**3
-                    corrfac = (1 / rho) ** 0.5
-                    corrfac2 = ((t / 273) ** 1.5) * 393 / (t + 120)
+                    tcg = 1.0
+                    facx1i = 1.0
+                    apb = (
+                        RCL_APB1 * vpice - RCL_APB2 * vpice * t + in_ap[0, 0, 0] * RCL_APB3 * t**3.0
+                    )
+                    corrfac = (1.0 / rho) ** 0.5
+                    corrfac2 = ((t / 273.0) ** 1.5) * 393.0 / (t + 120.0)
                     pr02 = rho * ice0 * RCL_CONST1I / (tcg * facx1i)
                     term1 = (
                         (vpliq - vpice)
-                        * t**2
+                        * t**2.0
                         * vpice
                         * corrfac2
                         * tcg
@@ -955,10 +957,11 @@ def cloudsc(
 
                     # --- at top of cloud, reduce deposition rate near cloud top to account for
                     # --- small scale turbulent processes
-                    infactor = min(icenuclei / 15000, 1.0)
+                    infactor = min(icenuclei / 15000.0, 1.0)
                     depos *= min(
                         infactor
-                        + (1 - infactor) * (RDEPLIQREFRATE + tmp_cldtopdist / RDEPLIQREFDEPTH),
+                        + (1.0 - infactor)
+                        * (RDEPLIQREFRATE + tmp_cldtopdist[0, 0] / RDEPLIQREFDEPTH),
                         1.0,
                     )
 
@@ -970,7 +973,7 @@ def cloudsc(
 
             # === 4: precipitation processes
             # --- revise in-cloud condensate amount
-            tmpa = 1 / max(a, EPSEC)
+            tmpa = 1.0 / max(a, EPSEC)
             liqcld = qlfg * tmpa
             icecld = qifg * tmpa
 
@@ -1052,10 +1055,10 @@ def cloudsc(
 
             # --- precip cover overlap using RAX-RAN Overlap
             if qpretot > EPSEC:
-                tmp_covptot[0, 0] = 1 - (
-                    (1 - tmp_covptot[0, 0])
-                    * (1 - max(a[0, 0, 0], a[0, 0, -1]))
-                    / (1 - min(a[0, 0, -1], 1 - 1e-6))
+                tmp_covptot[0, 0] = 1.0 - (
+                    (1.0 - tmp_covptot[0, 0])
+                    * (1.0 - max(a[0, 0, 0], a[0, 0, -1]))
+                    / (1.0 - min(a[0, 0, -1], 1.0 - 1.0e-6))
                 )
                 tmp_covptot[0, 0] = max(tmp_covptot[0, 0], RCOVPMIN)
                 covpclr = max(0.0, tmp_covptot[0, 0] - a)
@@ -1081,7 +1084,7 @@ def cloudsc(
                     else:
                         lcrit = RLCRITSNOW
 
-                    snowaut = co * (1 - exp(-((icecld / lcrit) ** 2)))
+                    snowaut = co * (1.0 - exp(-((icecld / lcrit) ** 2.0)))
                     solqb_qs_qi += snowaut
 
             # *** 4.2b: autoconversion warm clouds
@@ -1105,8 +1108,8 @@ def cloudsc(
                     lcrit /= max(cfpr, EPSEC)
 
                     rainaut = co
-                    if liqcld / lcrit < 20:
-                        rainaut *= 1 - exp(-((liqcld / lcrit) ** 2))
+                    if liqcld / lcrit < 20.0:
+                        rainaut *= 1.0 - exp(-((liqcld / lcrit) ** 2.0))
 
                     # rain freezes instantly
                     if t <= RTT:
@@ -1126,7 +1129,7 @@ def cloudsc(
                         rainaut = min(rainaut, qlfg)
                         if rainaut < EPSEC:
                             rainaut = 0.0
-                        rainacc = 2 * a * dt * RCL_KKAac * (liqcld * raincld) ** RCL_KKBac
+                        rainacc = 2.0 * a * dt * RCL_KKAac * (liqcld * raincld) ** RCL_KKBac
                         rainacc = min(rainacc, qlfg)
                         if rainacc < EPSEC:
                             rainacc = 0.0
@@ -1179,7 +1182,7 @@ def cloudsc(
                 tdmtw0 = t - RTT - subsat * (TW1 + TW2 * (in_ap[0, 0, 0] - TW3) - TW4 * (t - TW5))
 
                 # ensure cons1 is positive
-                cons1 = abs(dt * (1 + 0.5 * tdmtw0) / RTAUMEL)
+                cons1 = abs(dt * (1.0 + 0.5 * tdmtw0) / RTAUMEL)
                 meltmax = max(tdmtw0 * cons1 * RLDCP, 0.0)
 
             if meltmax > EPSEC and icetot > EPSEC:
@@ -1215,11 +1218,11 @@ def cloudsc(
 
                         # calculate freezing rate based on Bigg (1953) and Wisner (1972)
                         temp = RCL_FZRAB * (t - RTT)
-                        frz = dt * (RCL_CONST5R / rho) * (exp(temp) - 1) * lambda_**RCL_CONST6R
+                        frz = dt * (RCL_CONST5R / rho) * (exp(temp) - 1.0) * lambda_**RCL_CONST6R
                         frzmax = max(frz, 0.0)
                     else:
                         # majority of raindrops only partially melted
-                        cons1 = abs(dt * (1 + 0.5 * (RTT - t)) / RTAUMEL)
+                        cons1 = abs(dt * (1.0 + 0.5 * (RTT - t)) / RTAUMEL)
                         frzmax = max((RTT - t) * cons1 * RLDCP, 0.0)
 
                     if frzmax > EPSEC:
@@ -1236,9 +1239,9 @@ def cloudsc(
 
             # *** 4.4: evaporation of rain/snow
             if EVAPRAIN == 1:  # --- rain evaporation scheme from Sundquist
-                rh = RPRECRHMAX + (1 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1 - a)
+                rh = RPRECRHMAX + (1.0 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1.0 - a)
                 rh = min(max(rh, RPRECRHMAX), 1.0)
-                qe = (qv - a * qsliq) / max(EPSEC, 1 - a)
+                qe = (qv - a * qsliq) / max(EPSEC, 1.0 - a)
 
                 # --- humidity in moistest covpclr part of domain
                 qe = max(0.0, min(qe, qsliq))
@@ -1247,7 +1250,7 @@ def cloudsc(
                     # note: preclr is a rain flux
                     expr4 = tmp_covptot[0, 0] * dtgdp
                     expr5 = max(abs(expr4), EPSILON)
-                    expr6 = expr5 if expr4 > 0 else -expr5
+                    expr6 = expr5 if expr4 > 0.0 else -expr5
                     preclr = qrfg * covpclr / expr6
 
                     # --- actual microphysics formula in beta
@@ -1258,7 +1261,7 @@ def cloudsc(
                         / max(covpclr, EPSEC)
                     )
                     beta = RG * RPECONS * 0.5 * beta1**0.5777
-                    denom = 1 + beta * dt * corqsliq
+                    denom = 1.0 + beta * dt * corqsliq
                     dpr = covpclr * beta * (qsliq - qe) / denom * dp / RG
                     dpevap = dpr * dtgdp
 
@@ -1278,7 +1281,7 @@ def cloudsc(
             elif EVAPRAIN == 2:  # --- rain evaporation scheme based on Abel and Boutle (2013)
                 # --- calculate relative humidity limit for rain evaporation
                 # limit rh for rain evaporation dependent on precipitation fraction
-                rh = RPRECRHMAX + (1 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1 - a)
+                rh = RPRECRHMAX + (1.0 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1.0 - a)
                 rh = min(max(rh, RPRECRHMAX), 1.0)
 
                 # further limit rh for rain evaporation to 80%
@@ -1303,17 +1306,17 @@ def cloudsc(
                     evap_denom = (
                         RCL_CDENOM1 * esatliq
                         - RCL_CDENOM2 * t * esatliq
-                        + RCL_CDENOM3 * t**3 * in_ap[0, 0, 0]
+                        + RCL_CDENOM3 * t**3.0 * in_ap[0, 0, 0]
                     )
 
                     # temperature dependent conductivity
-                    corr2 = (t / 273) ** 1.5 * 393 / (t + 120)
+                    corr2 = (t / 273.0) ** 1.5 * 393.0 / (t + 120.0)
 
                     subsat = max(rh * qsliq - qe, 0.0)
                     beta = (
                         0.5
                         / qsliq
-                        * t**2
+                        * t**2.0
                         * esatliq
                         * RCL_CONST1R
                         * (corr2 / evap_denom)
@@ -1324,7 +1327,7 @@ def cloudsc(
                             / (corr2**0.5 * lambda_**RCL_CONST3R)
                         )
                     )
-                    denom = 1 + beta * dt
+                    denom = 1.0 + beta * dt
                     dpevap = covpclr * beta * dt * subsat / denom
 
                     # --- add evaporation term to explicit sink
@@ -1343,9 +1346,9 @@ def cloudsc(
 
             # *** 4.5: evaporation of snow
             if EVAPSNOW == 1:
-                rh = RPRECRHMAX + (1 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1 - a)
+                rh = RPRECRHMAX + (1.0 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1.0 - a)
                 rh = min(max(rh, RPRECRHMAX), 1.0)
-                qe = (qv - a * qsice) / max(EPSEC, 1 - a)
+                qe = (qv - a * qsice) / max(EPSEC, 1.0 - a)
 
                 # --- humidity in moistest covpclr part of domain
                 qe = max(0.0, min(qe, qsice))
@@ -1353,7 +1356,7 @@ def cloudsc(
                 if lo1:
                     expr7 = tmp_covptot[0, 0] * dtgdp
                     expr8 = max(abs(expr7), EPSILON)
-                    expr9 = expr8 if expr7 > 0 else -expr8
+                    expr9 = expr8 if expr7 > 0.0 else -expr8
                     preclr = qsfg * covpclr / expr9
 
                     # --- actual microphysics formula in beta
@@ -1364,7 +1367,7 @@ def cloudsc(
                         / max(covpclr, EPSEC)
                     )
                     beta = RG * RPECONS * beta1**0.5777
-                    denom = 1 + beta * dt * corqsice
+                    denom = 1.0 + beta * dt * corqsice
                     dpr = covpclr * beta * (qsice - qe) / denom * dp / RG
                     dpevap = dpr * dtgdp
 
@@ -1383,9 +1386,9 @@ def cloudsc(
                     qsfg -= evap
             elif EVAPSNOW == 2:
                 # --- calculate relative humidity limit for snow evaporation
-                rh = RPRECRHMAX + (1 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1 - a)
+                rh = RPRECRHMAX + (1.0 - RPRECRHMAX) * tmp_covpmax[0, 0] / max(EPSEC, 1.0 - a)
                 rh = min(max(rh, RPRECRHMAX), 1.0)
-                qe = (qv - a * qsice) / max(EPSEC, 1 - a)
+                qe = (qv - a * qsice) / max(EPSEC, 1.0 - a)
 
                 # --- humidity in moistest covpclr part of domain
                 qe = max(0.0, min(qe, qsice))
@@ -1398,13 +1401,15 @@ def cloudsc(
                     # particle size distribution
                     tcg = 1.0
                     facx1s = 1.0
-                    apb = RCL_APB1 * vpice - RCL_APB2 * vpice * t + in_ap[0, 0, 0] * RCL_APB3 * t**3
-                    corrfac = (1 / rho) ** 0.5
-                    corrfac2 = ((t / 273) ** 1.5) * 393 / (t + 120)
+                    apb = (
+                        RCL_APB1 * vpice - RCL_APB2 * vpice * t + in_ap[0, 0, 0] * RCL_APB3 * t**3.0
+                    )
+                    corrfac = (1.0 / rho) ** 0.5
+                    corrfac2 = ((t / 273.0) ** 1.5) * 393.0 / (t + 120.0)
                     pr02 = rho * preclr * RCL_CONST1S / (tcg * facx1s)
                     term1 = (
                         (qsice - qe)
-                        * t**2
+                        * t**2.0
                         * vpice
                         * corrfac2
                         * tcg
@@ -1451,7 +1456,7 @@ def cloudsc(
 
             # === 5: solvers for A and L
             # *** 5.1: solver for cloud cover
-            anew = min((a + solac) / (1 + solab), 1.0)
+            anew = min((a + solac) / (1.0 + solab), 1.0)
             if anew < RAMIN:
                 anew = 0.0
             da = anew - a0
@@ -1901,7 +1906,7 @@ def cloudsc(
             # --- set the lhs of equation
             # --- diagonals: microphysical sink terms + transport
             lhs_ql_ql = (
-                1
+                1.0
                 + fallsink_ql
                 + solqb_qv_ql
                 + solqb_ql_ql
@@ -1910,7 +1915,7 @@ def cloudsc(
                 + solqb_qs_ql
             )
             lhs_qi_qi = (
-                1
+                1.0
                 + fallsink_qi
                 + solqb_qv_qi
                 + solqb_ql_qi
@@ -1919,7 +1924,7 @@ def cloudsc(
                 + solqb_qs_qi
             )
             lhs_qr_qr = (
-                1
+                1.0
                 + fallsink_qr
                 + solqb_qv_qr
                 + solqb_ql_qr
@@ -1928,7 +1933,7 @@ def cloudsc(
                 + solqb_qs_qr
             )
             lhs_qs_qs = (
-                1
+                1.0
                 + fallsink_qs
                 + solqb_qv_qs
                 + solqb_ql_qs
@@ -1937,7 +1942,7 @@ def cloudsc(
                 + solqb_qs_qs
             )
             lhs_qv_qv = (
-                1
+                1.0
                 + fallsink_qv
                 + solqb_qv_qv
                 + solqb_ql_qv
@@ -2162,7 +2167,7 @@ def cloudsc(
                 qin[0, 0, -1]
                 - qi0[0, 0, -1]
                 + in_vfi[0, 0, -1] * dt
-                - (1 - foealfa[0, 0, -1]) * lude[0, 0, -1]
+                - (1.0 - foealfa[0, 0, -1]) * lude[0, 0, -1]
             ) * gdph_r
             # ice, negative numbers
             out_fcqnng[0, 0, 0] += lneg_qi[0, 0, -1] * gdph_r
