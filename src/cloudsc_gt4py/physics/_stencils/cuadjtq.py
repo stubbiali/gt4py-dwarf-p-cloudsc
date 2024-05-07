@@ -18,7 +18,6 @@ from gt4py.cartesian import gtscript
 
 from cloudsc_gt4py.physics._stencils.fcttre import f_foedem, f_foeewm, f_foeldcpm
 from ifs_physics_common.framework.stencil import function_collection
-from ifs_physics_common.utils.f2py import ported_function
 
 
 @function_collection("f_cuadjtq_5")
@@ -35,7 +34,6 @@ def f_cuadjtq_5(qp, qsmix, t):
     return qsmix, t
 
 
-@ported_function(from_file="cloudsc_fortran/cloudsc.F90", from_line=1297, to_line=1314)
 @function_collection("f_cuadjtq")
 @gtscript.function
 def f_cuadjtq(ap, qsmix, t):

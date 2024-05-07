@@ -22,8 +22,6 @@ import numpy as np
 from pydantic import BaseModel
 from typing import TYPE_CHECKING
 
-from ifs_physics_common.utils.f2py import ported_method
-
 if TYPE_CHECKING:
     from collections.abc import Callable
     from numpy.typing import NDArray
@@ -236,21 +234,17 @@ class HDF5Reader:
     def get_timestep(self) -> timedelta:
         return timedelta(seconds=float(self._get_parameter_f("PTSPHY")))
 
-    @ported_method(from_file="common/module/yoecldp.F90", from_line=86, to_line=91)
     def get_yoecldp_parameters(self) -> YoecldpParameters:
         return YoecldpParameters(
             **{"NCLV": 5, "NCLDQL": 1, "NCLDQI": 2, "NCLDQR": 3, "NCLDQS": 4, "NCLDQV": 5}
         )
 
-    @ported_method(from_file="common/module/yoethf.F90", from_line=79, to_line=99)
     def get_yoethf_parameters(self) -> YoethfParameters:
         return self._initialize_parameters(YoethfParameters)  # type: ignore[return-value]
 
-    @ported_method(from_file="common/module/yomcst.F90", from_line=167, to_line=177)
     def get_yomcst_parameters(self) -> YomcstParameters:
         return self._initialize_parameters(YomcstParameters)  # type: ignore[return-value]
 
-    @ported_method(from_file="common/module/yoecldp.F90", from_line=242, to_line=370)
     def get_yrecldp_parameters(self) -> YrecldpParameters:
         return self._initialize_parameters(  # type: ignore[return-value]
             YrecldpParameters, get_parameter_name=lambda attr_name: "YRECLDP_" + attr_name

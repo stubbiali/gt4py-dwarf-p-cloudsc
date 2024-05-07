@@ -18,10 +18,8 @@ from gt4py.cartesian import gtscript
 
 from cloudsc_gt4py.physics._stencils.fcttre import f_foeeice, f_foeeliq
 from ifs_physics_common.framework.stencil import function_collection
-from ifs_physics_common.utils.f2py import ported_function
 
 
-@ported_function(from_file="common/include/fccld.func.h", from_line=26, to_line=27)
 @function_collection("f_fokoop")
 @gtscript.function
 def f_fokoop(t):
