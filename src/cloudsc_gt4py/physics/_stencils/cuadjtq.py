@@ -26,9 +26,9 @@ def f_cuadjtq_5(qp, qsmix, t):
     from __externals__ import RETV
 
     qsat = min(f_foeewm(t) * qp, 0.5)
-    cor = 1 / (1 - RETV * qsat)
+    cor = 1.0 / (1.0 - RETV * qsat)
     qsat *= cor
-    cond = (qsmix - qsat) / (1 + qsat * cor * f_foedem(t))
+    cond = (qsmix - qsat) / (1.0 + qsat * cor * f_foedem(t))
     t += f_foeldcpm(t) * cond
     qsmix -= cond
     return qsmix, t
@@ -37,7 +37,7 @@ def f_cuadjtq_5(qp, qsmix, t):
 @function_collection("f_cuadjtq")
 @gtscript.function
 def f_cuadjtq(ap, qsmix, t):
-    qp = 1 / ap
+    qp = 1.0 / ap
     qsmix, t = f_cuadjtq_5(qp, qsmix, t)
     qsmix, t = f_cuadjtq_5(qp, qsmix, t)
     return qsmix, t

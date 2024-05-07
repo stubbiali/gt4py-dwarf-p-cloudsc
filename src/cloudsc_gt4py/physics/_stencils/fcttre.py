@@ -24,7 +24,7 @@ from ifs_physics_common.framework.stencil import function_collection
 def f_foedelta(t):
     from __externals__ import RTT
 
-    return 1 if t > RTT else 0
+    return 1.0 if t > RTT else 0.0
 
 
 @function_collection("f_foealfa")
@@ -32,7 +32,7 @@ def f_foedelta(t):
 def f_foealfa(t):
     from __externals__ import RTICE, RTWAT, RTWAT_RTICE_R
 
-    return min(1.0, ((max(RTICE, min(RTWAT, t)) - RTICE) * RTWAT_RTICE_R) ** 2)
+    return min(1.0, ((max(RTICE, min(RTWAT, t)) - RTICE) * RTWAT_RTICE_R) ** 2.0)
 
 
 @function_collection("f_foeewm")
@@ -42,7 +42,7 @@ def f_foeewm(t):
 
     return R2ES * (
         f_foealfa(t) * exp(R3LES * (t - RTT) / (t - R4LES))
-        + (1 - f_foealfa(t)) * (exp(R3IES * (t - RTT) / (t - R4IES)))
+        + (1.0 - f_foealfa(t)) * (exp(R3IES * (t - RTT) / (t - R4IES)))
     )
 
 
@@ -51,8 +51,8 @@ def f_foeewm(t):
 def f_foedem(t):
     from __externals__ import R4IES, R4LES, R5ALSCP, R5ALVCP
 
-    return f_foealfa(t) * R5ALVCP * (1 / (t - R4LES) ** 2) + (1 - f_foealfa(t)) * R5ALSCP * (
-        1 / (t - R4IES) ** 2
+    return f_foealfa(t) * R5ALVCP * (1.0 / (t - R4LES) ** 2.0) + (1.0 - f_foealfa(t)) * R5ALSCP * (
+        1.0 / (t - R4IES) ** 2.0
     )
 
 
@@ -61,7 +61,7 @@ def f_foedem(t):
 def f_foeldcpm(t):
     from __externals__ import RALSDCP, RALVDCP
 
-    return f_foealfa(t) * RALVDCP + (1 - f_foealfa(t)) * RALSDCP
+    return f_foealfa(t) * RALVDCP + (1.0 - f_foealfa(t)) * RALSDCP
 
 
 @function_collection("f_foeeliq")
