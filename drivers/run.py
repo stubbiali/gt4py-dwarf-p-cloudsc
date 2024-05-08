@@ -38,14 +38,14 @@ from ifs_physics_common.utils.validation import validate
 if TYPE_CHECKING:
     from typing import Literal, Optional, Type
 
-    from ifs_physics_common.framework.config import IOConfig
+    from ifs_physics_common.framework.config import IOConfig, PythonConfig
 
-    from .config import Config, DEFAULT_CONFIG, DEFAULT_IO_CONFIG
+    from .config import DEFAULT_CONFIG, DEFAULT_IO_CONFIG
 else:
-    from config import Config, DEFAULT_CONFIG, DEFAULT_IO_CONFIG
+    from config import DEFAULT_CONFIG, DEFAULT_IO_CONFIG
 
 
-def core(config: Config, io_config: IOConfig, cloudsc_cls: Type) -> None:
+def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: Type) -> None:
     hdf5_reader = HDF5Reader(config.input_file, config.data_types)
 
     nx = config.num_cols or hdf5_reader.get_nlon()
