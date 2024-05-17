@@ -14,9 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cloudsc_gt4py.physics._stencils.cloudsc
-import cloudsc_gt4py.physics._stencils.cloudsc_split
-import cloudsc_gt4py.physics._stencils.cuadjtq
-import cloudsc_gt4py.physics._stencils.fccld
-import cloudsc_gt4py.physics._stencils.fcttre
-import cloudsc_gt4py.physics._stencils.helpers
+from cloudsc_gt4py.physics._stencils import cloudsc, cloudsc_split, cuadjtq, fccld, fcttre, helpers
