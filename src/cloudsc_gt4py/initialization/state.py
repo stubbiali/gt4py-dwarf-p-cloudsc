@@ -19,75 +19,74 @@ from datetime import datetime
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cloudsc_gt4py.initialization.utils import initialize_field
 from ifs_physics_common.framework.grid import I, J, K
-from ifs_physics_common.framework.storage import allocate_data_array
+from ifs_physics_common.framework.storage import initialize_field, zeros
 
 if TYPE_CHECKING:
-    from typing import Literal, Tuple
+    from typing import Literal
 
     from cloudsc_gt4py.utils.iox import HDF5Reader
     from ifs_physics_common.framework.config import GT4PyConfig
-    from ifs_physics_common.framework.grid import ComputationalGrid, DimSymbol
+    from ifs_physics_common.framework.grid import ComputationalGrid, DimTuple
     from ifs_physics_common.utils.typingx import DataArray, DataArrayDict
 
 
 def allocate_state(
     computational_grid: ComputationalGrid, *, gt4py_config: GT4PyConfig
 ) -> DataArrayDict:
-    def _allocate(
-        grid_id: Tuple[DimSymbol, ...], units: str, dtype: Literal["bool", "float", "int"]
+    def _zeros(
+        grid_id: DimTuple, units: str, dtype_name: Literal["bool", "float", "int"]
     ) -> DataArray:
-        return allocate_data_array(
-            computational_grid, grid_id, units, gt4py_config=gt4py_config, dtype=dtype
+        return zeros(
+            computational_grid, grid_id, units, gt4py_config=gt4py_config, dtype_name=dtype_name
         )
 
-    allocate_b_ij = partial(_allocate, grid_id=(I, J), units="", dtype="bool")
-    allocate_f = partial(_allocate, grid_id=(I, J, K), units="", dtype="float")
-    allocate_f_h = partial(_allocate, grid_id=(I, J, K - 1 / 2), units="", dtype="float")
-    allocate_f_ij = partial(_allocate, grid_id=(I, J), units="", dtype="float")
-    allocate_i_ij = partial(_allocate, grid_id=(I, J), units="", dtype="int")
+    zeros_b_ij = partial(_zeros, grid_id=(I, J), units="", dtype="bool")
+    zeros_f = partial(_zeros, grid_id=(I, J, K), units="", dtype="float")
+    zeros_f_h = partial(_zeros, grid_id=(I, J, K - 1 / 2), units="", dtype="float")
+    zeros_f_ij = partial(_zeros, grid_id=(I, J), units="", dtype="float")
+    zeros_i_ij = partial(_zeros, grid_id=(I, J), units="", dtype="int")
 
     return {
         "time": datetime(year=2022, month=1, day=1),
-        "b_convection_on": allocate_b_ij(),
-        "f_a": allocate_f(),
-        "f_ap": allocate_f(),
-        "f_aph": allocate_f_h(),
-        "f_ccn": allocate_f(),
-        "f_dyni": allocate_f(),
-        "f_dynl": allocate_f(),
-        "f_hrlw": allocate_f(),
-        "f_hrsw": allocate_f(),
-        "f_icrit_aer": allocate_f(),
-        "f_lcrit_aer": allocate_f(),
-        "f_lsm": allocate_f_ij(),
-        "f_lu": allocate_f(),
-        "f_lude": allocate_f(),
-        "f_mfd": allocate_f(),
-        "f_mfu": allocate_f(),
-        "f_nice": allocate_f(),
-        "f_qi": allocate_f(),
-        "f_ql": allocate_f(),
-        "f_qr": allocate_f(),
-        "f_qs": allocate_f(),
-        "f_qv": allocate_f(),
-        "f_re_ice": allocate_f(),
-        "f_snde": allocate_f(),
-        "f_supsat": allocate_f(),
-        "f_t": allocate_f(),
-        "f_tnd_tmp_a": allocate_f(),
-        "f_tnd_tmp_qi": allocate_f(),
-        "f_tnd_tmp_ql": allocate_f(),
-        "f_tnd_tmp_qr": allocate_f(),
-        "f_tnd_tmp_qs": allocate_f(),
-        "f_tnd_tmp_qv": allocate_f(),
-        "f_tnd_tmp_t": allocate_f(),
-        "f_vfa": allocate_f(),
-        "f_vfi": allocate_f(),
-        "f_vfl": allocate_f(),
-        "f_w": allocate_f(),
-        "i_convection_type": allocate_i_ij(),
+        "b_convection_on": zeros_b_ij(),
+        "f_a": zeros_f(),
+        "f_ap": zeros_f(),
+        "f_aph": zeros_f_h(),
+        "f_ccn": zeros_f(),
+        "f_dyni": zeros_f(),
+        "f_dynl": zeros_f(),
+        "f_hrlw": zeros_f(),
+        "f_hrsw": zeros_f(),
+        "f_icrit_aer": zeros_f(),
+        "f_lcrit_aer": zeros_f(),
+        "f_lsm": zeros_f_ij(),
+        "f_lu": zeros_f(),
+        "f_lude": zeros_f(),
+        "f_mfd": zeros_f(),
+        "f_mfu": zeros_f(),
+        "f_nice": zeros_f(),
+        "f_qi": zeros_f(),
+        "f_ql": zeros_f(),
+        "f_qr": zeros_f(),
+        "f_qs": zeros_f(),
+        "f_qv": zeros_f(),
+        "f_re_ice": zeros_f(),
+        "f_snde": zeros_f(),
+        "f_supsat": zeros_f(),
+        "f_t": zeros_f(),
+        "f_tnd_tmp_a": zeros_f(),
+        "f_tnd_tmp_qi": zeros_f(),
+        "f_tnd_tmp_ql": zeros_f(),
+        "f_tnd_tmp_qr": zeros_f(),
+        "f_tnd_tmp_qs": zeros_f(),
+        "f_tnd_tmp_qv": zeros_f(),
+        "f_tnd_tmp_t": zeros_f(),
+        "f_vfa": zeros_f(),
+        "f_vfi": zeros_f(),
+        "f_vfl": zeros_f(),
+        "f_w": zeros_f(),
+        "i_convection_type": zeros_i_ij(),
     }
 
 

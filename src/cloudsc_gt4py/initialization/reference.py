@@ -19,36 +19,35 @@ from datetime import datetime
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cloudsc_gt4py.initialization.utils import initialize_field
 from ifs_physics_common.framework.grid import I, J, K
-from ifs_physics_common.framework.storage import allocate_data_array
+from ifs_physics_common.framework.storage import initialize_field, zeros
 
 if TYPE_CHECKING:
-    from typing import Literal, Tuple
+    from typing import Literal
 
     from cloudsc_gt4py.utils.iox import HDF5Reader
     from ifs_physics_common.framework.config import GT4PyConfig
-    from ifs_physics_common.framework.grid import ComputationalGrid, DimSymbol
+    from ifs_physics_common.framework.grid import ComputationalGrid, DimTuple
     from ifs_physics_common.utils.typingx import DataArray, DataArrayDict
 
 
 def allocate_tendencies(
     computational_grid: ComputationalGrid, *, gt4py_config: GT4PyConfig
 ) -> DataArrayDict:
-    def allocate(units: str = "") -> DataArray:
-        return allocate_data_array(
-            computational_grid, (I, J, K), units, gt4py_config=gt4py_config, dtype="float"
+    def _zeros(units: str = "") -> DataArray:
+        return zeros(
+            computational_grid, (I, J, K), units, gt4py_config=gt4py_config, dtype_name="float"
         )
 
     return {
         "time": datetime(year=2022, month=1, day=1),
-        "f_a": allocate(),
-        "f_qi": allocate(),
-        "f_ql": allocate(),
-        "f_qr": allocate(),
-        "f_qs": allocate(),
-        "f_qv": allocate(),
-        "f_t": allocate(),
+        "f_a": _zeros(),
+        "f_qi": _zeros(),
+        "f_ql": _zeros(),
+        "f_qr": _zeros(),
+        "f_qs": _zeros(),
+        "f_qv": _zeros(),
+        "f_t": _zeros(),
     }
 
 
@@ -66,35 +65,35 @@ def initialize_tendencies(tendencies: DataArrayDict, hdf5_reader: HDF5Reader) ->
 def allocate_diagnostics(
     computational_grid: ComputationalGrid, *, gt4py_config: GT4PyConfig
 ) -> DataArrayDict:
-    def _allocate(
-        grid_id: Tuple[DimSymbol, ...], units: str, dtype: Literal["bool", "float", "int"]
+    def _zeros(
+        grid_id: DimTuple, units: str, dtype_name: Literal["bool", "float", "int"]
     ) -> DataArray:
-        return allocate_data_array(
-            computational_grid, grid_id, units, gt4py_config=gt4py_config, dtype=dtype
+        return zeros(
+            computational_grid, grid_id, units, gt4py_config=gt4py_config, dtype_name=dtype_name
         )
 
-    allocate = partial(_allocate, grid_id=(I, J, K), units="", dtype="float")
-    allocate_h = partial(_allocate, grid_id=(I, J, K - 1 / 2), units="", dtype="float")
-    allocate_ij = partial(_allocate, grid_id=(I, J), units="", dtype="float")
+    zeros_ijk = partial(_zeros, grid_id=(I, J, K), units="", dtype_name="float")
+    zeros_ijk_h = partial(_zeros, grid_id=(I, J, K - 1 / 2), units="", dtype_name="float")
+    zeros_ij = partial(_zeros, grid_id=(I, J), units="", dtype_name="float")
 
     return {
         "time": datetime(year=2022, month=1, day=1),
-        "f_covptot": allocate(),
-        "f_fcqlng": allocate_h(),
-        "f_fcqnng": allocate_h(),
-        "f_fcqrng": allocate_h(),
-        "f_fcqsng": allocate_h(),
-        "f_fhpsl": allocate_h(),
-        "f_fhpsn": allocate_h(),
-        "f_fplsl": allocate_h(),
-        "f_fplsn": allocate_h(),
-        "f_fsqif": allocate_h(),
-        "f_fsqitur": allocate_h(),
-        "f_fsqlf": allocate_h(),
-        "f_fsqltur": allocate_h(),
-        "f_fsqrf": allocate_h(),
-        "f_fsqsf": allocate_h(),
-        "f_rainfrac_toprfz": allocate_ij(),
+        "f_covptot": zeros_ijk(),
+        "f_fcqlng": zeros_ijk_h(),
+        "f_fcqnng": zeros_ijk_h(),
+        "f_fcqrng": zeros_ijk_h(),
+        "f_fcqsng": zeros_ijk_h(),
+        "f_fhpsl": zeros_ijk_h(),
+        "f_fhpsn": zeros_ijk_h(),
+        "f_fplsl": zeros_ijk_h(),
+        "f_fplsn": zeros_ijk_h(),
+        "f_fsqif": zeros_ijk_h(),
+        "f_fsqitur": zeros_ijk_h(),
+        "f_fsqlf": zeros_ijk_h(),
+        "f_fsqltur": zeros_ijk_h(),
+        "f_fsqrf": zeros_ijk_h(),
+        "f_fsqsf": zeros_ijk_h(),
+        "f_rainfrac_toprfz": zeros_ij(),
     }
 
 
