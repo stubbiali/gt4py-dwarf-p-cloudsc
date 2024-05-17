@@ -28,7 +28,6 @@ from ifs_physics_common.utils.numpyx import assign
 
 if TYPE_CHECKING:
     from datetime import timedelta
-    from typing import Dict
 
     from cloudsc_gt4py.utils.iox import (
         YoecldpParameters,
@@ -185,7 +184,7 @@ class CloudscSplit(ImplicitTendencyComponent):
         timestep: timedelta,
         out_tendencies: NDArrayLikeDict,
         out_diagnostics: NDArrayLikeDict,
-        overwrite_tendencies: Dict[str, bool],
+        overwrite_tendencies: dict[str, bool],
     ) -> None:
         with managed_temporary_storage(
             self.computational_grid,

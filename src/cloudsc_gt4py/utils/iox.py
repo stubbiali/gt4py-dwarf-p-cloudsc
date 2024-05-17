@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
     from numpy.typing import NDArray
-    from typing import Dict, Optional, Type, Union
+    from typing import Optional, Union
 
     from ifs_physics_common.framework.config import DataTypes
 
@@ -299,10 +299,10 @@ class HDF5Reader:
 
     def _initialize_parameters(
         self,
-        parameter_cls: Type[BaseModel],
+        parameter_cls: type[BaseModel],
         get_parameter_name: Optional[Callable[[str], str]] = None,
     ) -> BaseModel:
-        init_dict: Dict[str, Union[bool, float, int]] = {}
+        init_dict: dict[str, Union[bool, float, int]] = {}
         for attr_name, metadata in parameter_cls.schema()["properties"].items():
             param_name = (
                 get_parameter_name(attr_name) if get_parameter_name is not None else attr_name

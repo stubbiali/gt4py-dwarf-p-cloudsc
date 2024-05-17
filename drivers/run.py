@@ -36,7 +36,7 @@ from ifs_physics_common.utils.timing import timing
 from ifs_physics_common.utils.validation import validate
 
 if TYPE_CHECKING:
-    from typing import Literal, Optional, Type
+    from typing import Literal, Optional
 
     from ifs_physics_common.framework.config import IOConfig, PythonConfig
 
@@ -45,7 +45,7 @@ else:
     from config import DEFAULT_CONFIG, DEFAULT_IO_CONFIG
 
 
-def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: Type) -> None:
+def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
     hdf5_reader = HDF5Reader(config.input_file, config.data_types)
 
     nx = config.num_cols or hdf5_reader.get_nlon()
