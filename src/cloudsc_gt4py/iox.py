@@ -18,16 +18,14 @@ from __future__ import annotations
 from datetime import timedelta
 from functools import lru_cache
 import h5py
-import numpy as np
 from pydantic import BaseModel
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from numpy.typing import NDArray
     from typing import Optional, Union
 
-    from ifs_physics_common.framework.config import DataTypes
+    from ifs_physics_common.config import DataTypes
 
 
 class YoecldpParameters(BaseModel):
@@ -209,20 +207,6 @@ class HDF5Reader:
     def __del__(self) -> None:
         self.f.close()
 
-    def get_field(self, name: str) -> NDArray:
-        ds = self.f.get(name, None)
-        if ds is None:
-            raise RuntimeError(f"Unknown field `{name}`.")
-
-        if ds.ndim == 1:
-            return self._get_field_1d(ds, name)
-        elif ds.ndim == 2:
-            return self._get_field_2d(ds, name)
-        elif ds.ndim == 3:
-            return self._get_field_3d(ds, name)
-        else:
-            raise RuntimeError(f"The field `{name}` has unexpected shape {ds.shape}.")
-
     @lru_cache
     def get_nlev(self) -> int:
         return self.f["KLEV"][0]  # type: ignore[no-any-return]
@@ -249,53 +233,6 @@ class HDF5Reader:
         return self._initialize_parameters(  # type: ignore[return-value]
             YrecldpParameters, get_parameter_name=lambda attr_name: "YRECLDP_" + attr_name
         )
-
-    def _get_field_1d(self, ds: h5py.Dataset, name: str) -> NDArray:
-        nlon = self.get_nlon()
-        nlev = self.get_nlev()
-        if nlon <= ds.shape[0] <= nlon + 1 or nlev <= ds.shape[0] <= nlev + 1:
-            return ds[:]  # type: ignore[no-any-return]
-        else:
-            raise RuntimeError(
-                f"The field `{name}` is expected to have shape ({nlon}(+1),) or "
-                f"({nlev}(+1),), but has shape {ds.shape}."
-            )
-
-    def _get_field_2d(self, ds: h5py.Dataset, name: str) -> NDArray:
-        nlon = self.get_nlon()
-        nlev = self.get_nlev()
-        if nlon <= ds.shape[0] <= nlon + 1 and nlev <= ds.shape[1] <= nlev + 1:
-            return ds[...]  # type: ignore[no-any-return]
-        elif nlon <= ds.shape[1] <= nlon + 1 and nlev <= ds.shape[0] <= nlev + 1:
-            return np.transpose(ds[...])
-        else:
-            raise RuntimeError(
-                f"The field `{name}` is expected to have shape "
-                f"({nlon}(+1), {nlev}(+1)) or ({nlev}(+1), {nlon}(+1)), "
-                f"but has shape {ds.shape}."
-            )
-
-    def _get_field_3d(self, ds: h5py.Dataset, name: str) -> NDArray:
-        nlon = self.get_nlon()
-        nlev = self.get_nlev()
-
-        if nlon in ds.shape:
-            axes = [ds.shape.index(nlon)]
-        elif nlon + 1 in ds.shape:
-            axes = [ds.shape.index(nlon + 1)]
-        else:
-            raise RuntimeError(f"The field `{name}` has unexpected shape {ds.shape}.")
-
-        if nlev in ds.shape:
-            axes += [ds.shape.index(nlev)]
-        elif nlev + 1 in ds.shape:
-            axes += [ds.shape.index(nlev + 1)]
-        else:
-            raise RuntimeError(f"The field `{name}` has unexpected shape {ds.shape}.")
-
-        axes += tuple({0, 1, 2} - set(axes))
-
-        return np.transpose(ds[...], axes=axes)
 
     def _initialize_parameters(
         self,

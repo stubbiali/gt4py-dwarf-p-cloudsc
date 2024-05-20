@@ -14,4 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cloudsc_gt4py.physics._stencils
+from gt4py.cartesian import gtscript
+
+from cloudsc_gt4py._stencils.fcttre import f_foeeice, f_foeeliq
+from ifs_physics_common.stencil import function_collection
+
+
+@function_collection("f_fokoop")
+@gtscript.function
+def f_fokoop(t):
+    from __externals__ import RKOOP1, RKOOP2
+
+    return min(RKOOP1 - RKOOP2 * t, f_foeeliq(t) / f_foeeice(t))

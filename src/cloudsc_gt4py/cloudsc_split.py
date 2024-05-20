@@ -21,23 +21,23 @@ import numpy as np
 import sys
 from typing import TYPE_CHECKING
 
-from ifs_physics_common.framework.components import ImplicitTendencyComponent
-from ifs_physics_common.framework.grid import I, J, K
-from ifs_physics_common.framework.storage import managed_temporary_storage
-from ifs_physics_common.utils.numpyx import assign
+from ifs_physics_common.components import ImplicitTendencyComponent
+from ifs_physics_common.grid import I, J, K
+from ifs_physics_common.storage import managed_temporary_storage
+from ifs_physics_common.numpyx import assign
 
 if TYPE_CHECKING:
     from datetime import timedelta
 
-    from cloudsc_gt4py.utils.iox import (
+    from cloudsc_gt4py.iox import (
         YoecldpParameters,
         YoethfParameters,
         YomcstParameters,
         YrecldpParameters,
     )
-    from ifs_physics_common.framework.config import GT4PyConfig
-    from ifs_physics_common.framework.grid import ComputationalGrid
-    from ifs_physics_common.utils.typingx import NDArrayLikeDict, PropertyDict
+    from ifs_physics_common.config import GT4PyConfig
+    from ifs_physics_common.grid import ComputationalGrid
+    from ifs_physics_common.typingx import NDArrayLikeDict, PropertyDict
 
 
 class CloudscSplit(ImplicitTendencyComponent):
@@ -103,79 +103,79 @@ class CloudscSplit(ImplicitTendencyComponent):
         self.cloudsc_fluxes = self.compile_stencil("cloudsc_fluxes", externals)
 
     @cached_property
-    def _input_properties(self) -> PropertyDict:
+    def input_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "b_convection_on": {"grid": (I, J), "units": ""},
-            "f_a": {"grid": (I, J, K), "units": ""},
-            "f_ap": {"grid": (I, J, K), "units": ""},
-            "f_aph": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_ccn": {"grid": (I, J, K), "units": ""},
-            "f_hrlw": {"grid": (I, J, K), "units": ""},
-            "f_hrsw": {"grid": (I, J, K), "units": ""},
-            "f_icrit_aer": {"grid": (I, J, K), "units": ""},
-            "f_lcrit_aer": {"grid": (I, J, K), "units": ""},
-            "f_lsm": {"grid": (I, J), "units": ""},
-            "f_lu": {"grid": (I, J, K), "units": ""},
-            "f_lude": {"grid": (I, J, K), "units": ""},
-            "f_mfd": {"grid": (I, J, K), "units": ""},
-            "f_mfu": {"grid": (I, J, K), "units": ""},
-            "f_nice": {"grid": (I, J, K), "units": ""},
-            "f_qi": {"grid": (I, J, K), "units": ""},
-            "f_ql": {"grid": (I, J, K), "units": ""},
-            "f_qr": {"grid": (I, J, K), "units": ""},
-            "f_qs": {"grid": (I, J, K), "units": ""},
-            "f_qv": {"grid": (I, J, K), "units": ""},
-            "f_re_ice": {"grid": (I, J, K), "units": ""},
-            "f_snde": {"grid": (I, J, K), "units": ""},
-            "f_supsat": {"grid": (I, J, K), "units": ""},
-            "f_t": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_a": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qi": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_ql": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qr": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qs": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qv": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_t": {"grid": (I, J, K), "units": ""},
-            "f_vfi": {"grid": (I, J, K), "units": ""},
-            "f_vfl": {"grid": (I, J, K), "units": ""},
-            "f_w": {"grid": (I, J, K), "units": ""},
-            "i_convection_type": {"grid": (I, J), "units": ""},
+            "b_convection_on": {"grid_dims": (I, J), "dtype_name": "bool", "units": ""},
+            "f_a": {"grid_dims": (I, J, K), "units": ""},
+            "f_ap": {"grid_dims": (I, J, K), "units": ""},
+            "f_aph": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_ccn": {"grid_dims": (I, J, K), "units": ""},
+            "f_hrlw": {"grid_dims": (I, J, K), "units": ""},
+            "f_hrsw": {"grid_dims": (I, J, K), "units": ""},
+            "f_icrit_aer": {"grid_dims": (I, J, K), "units": ""},
+            "f_lcrit_aer": {"grid_dims": (I, J, K), "units": ""},
+            "f_lsm": {"grid_dims": (I, J), "units": ""},
+            "f_lu": {"grid_dims": (I, J, K), "units": ""},
+            "f_lude": {"grid_dims": (I, J, K), "units": ""},
+            "f_mfd": {"grid_dims": (I, J, K), "units": ""},
+            "f_mfu": {"grid_dims": (I, J, K), "units": ""},
+            "f_nice": {"grid_dims": (I, J, K), "units": ""},
+            "f_qi": {"grid_dims": (I, J, K), "units": ""},
+            "f_ql": {"grid_dims": (I, J, K), "units": ""},
+            "f_qr": {"grid_dims": (I, J, K), "units": ""},
+            "f_qs": {"grid_dims": (I, J, K), "units": ""},
+            "f_qv": {"grid_dims": (I, J, K), "units": ""},
+            "f_re_ice": {"grid_dims": (I, J, K), "units": ""},
+            "f_snde": {"grid_dims": (I, J, K), "units": ""},
+            "f_supsat": {"grid_dims": (I, J, K), "units": ""},
+            "f_t": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_a": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qi": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_ql": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qr": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qs": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qv": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_t": {"grid_dims": (I, J, K), "units": ""},
+            "f_vfi": {"grid_dims": (I, J, K), "units": ""},
+            "f_vfl": {"grid_dims": (I, J, K), "units": ""},
+            "f_w": {"grid_dims": (I, J, K), "units": ""},
+            "i_convection_type": {"grid_dims": (I, J), "dtype_name": "int", "units": ""},
         }
 
     @cached_property
-    def _tendency_properties(self) -> PropertyDict:
+    def tendency_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "f_a": {"grid": (I, J, K), "units": "s^-1"},
-            "f_t": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qv": {"grid": (I, J, K), "units": "s^-1"},
-            "f_ql": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qi": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qr": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qs": {"grid": (I, J, K), "units": "s^-1"},
+            "f_a": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_t": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qv": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_ql": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qi": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qr": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qs": {"grid_dims": (I, J, K), "units": "s^-1"},
         }
 
     @cached_property
-    def _diagnostic_properties(self) -> PropertyDict:
+    def diagnostic_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "f_covptot": {"grid": (I, J, K), "units": ""},
-            "f_fcqlng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqnng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqrng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqsng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fhpsl": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fhpsn": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fplsl": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fplsn": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqif": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqitur": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqlf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqltur": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqrf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqsf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_rainfrac_toprfz": {"grid": (I, J), "units": ""},
+            "f_covptot": {"grid_dims": (I, J, K), "units": ""},
+            "f_fcqlng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqnng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqrng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqsng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fhpsl": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fhpsn": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fplsl": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fplsn": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqif": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqitur": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqlf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqltur": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqrf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqsf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_rainfrac_toprfz": {"grid_dims": (I, J), "units": ""},
         }
 
     def array_call(
@@ -190,7 +190,7 @@ class CloudscSplit(ImplicitTendencyComponent):
             self.computational_grid,
             *repeat(((I, J), "float"), 6),
             ((I, J), "bool"),
-            ((K,), "int"),
+            ((K - 1 / 2,), "int"),
             *repeat(((I, J, K), "float"), 18),
             gt4py_config=self.gt4py_config,
         ) as (

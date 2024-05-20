@@ -18,27 +18,25 @@ from __future__ import annotations
 import click
 from typing import TYPE_CHECKING
 
-from cloudsc_gt4py.physics.cloudsc import Cloudsc
-from cloudsc_gt4py.physics.cloudsc_split import CloudscSplit
-from cloudsc_gt4py.initialization.reference import (
-    get_reference_tendencies,
-    get_reference_diagnostics,
-)
-from cloudsc_gt4py.initialization.state import get_state
-from cloudsc_gt4py.utils.iox import HDF5Reader
-from ifs_physics_common.framework.grid import ComputationalGrid
-from ifs_physics_common.utils.output import (
+from cloudsc_gt4py.cloudsc import Cloudsc
+from cloudsc_gt4py.cloudsc_split import CloudscSplit
+from cloudsc_gt4py.setup import get_reference_diagnostics, get_reference_tendencies, get_state
+from cloudsc_gt4py.iox import HDF5Reader
+from ifs_physics_common.config import DomainConfig
+from ifs_physics_common.grid import ComputationalGrid
+from ifs_physics_common.h5pyx import HDF5Operator
+from ifs_physics_common.output import (
     print_performance,
     write_performance_to_csv,
     write_stencils_performance_to_csv,
 )
-from ifs_physics_common.utils.timing import timing
-from ifs_physics_common.utils.validation import validate
+from ifs_physics_common.timing import timing
+from ifs_physics_common.validation import validate
 
 if TYPE_CHECKING:
     from typing import Literal, Optional
 
-    from ifs_physics_common.framework.config import IOConfig, PythonConfig
+    from ifs_physics_common.config import IOConfig, PythonConfig
 
     from .config import DEFAULT_CONFIG, DEFAULT_IO_CONFIG
 else:
@@ -50,9 +48,12 @@ def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
 
     nx = config.num_cols or hdf5_reader.get_nlon()
     nz = hdf5_reader.get_nlev()
-    computational_grid = ComputationalGrid(nx, 1, nz)
+    computational_grid = ComputationalGrid(DomainConfig(nx=nx, ny=1, nz=nz))
 
-    state = get_state(computational_grid, hdf5_reader, gt4py_config=config.gt4py_config)
+    hdf5_operator = HDF5Operator(
+        config.input_file, computational_grid, gt4py_config=config.gt4py_config
+    )
+    state = get_state(hdf5_operator)
     dt = hdf5_reader.get_timestep()
 
     yoecldp_paramaters = hdf5_reader.get_yoecldp_parameters()
@@ -98,13 +99,11 @@ def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
         )
 
     if config.enable_validation:
-        hdf5_reader_ref = HDF5Reader(config.reference_file, config.data_types)
-        tends_ref = get_reference_tendencies(
-            computational_grid, hdf5_reader_ref, gt4py_config=config.gt4py_config
+        hdf5_operator_ref = HDF5Operator(
+            config.reference_file, computational_grid, gt4py_config=config.gt4py_config
         )
-        diags_ref = get_reference_diagnostics(
-            computational_grid, hdf5_reader_ref, gt4py_config=config.gt4py_config
-        )
+        tends_ref = get_reference_tendencies(hdf5_operator_ref)
+        diags_ref = get_reference_diagnostics(hdf5_operator_ref)
         print("\n== Validation:")
         validate(tends, tends_ref, atol=config.atol, rtol=config.rtol)
         validate(diags, diags_ref, atol=config.atol, rtol=config.rtol)
