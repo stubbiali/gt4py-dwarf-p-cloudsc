@@ -276,7 +276,7 @@ class CloudscSplit(ImplicitTendencyComponent):
                 **tendencies,
                 **diagnostics1,
                 **temporaries,
-                dt=timestep.total_seconds(),
+                dt=self.gt4py_config.dtypes.float(timestep.total_seconds()),
                 origin=(0, 0, 0),
                 domain=self.computational_grid.grids[I, J, K].shape,
                 validate_args=self.gt4py_config.validate_args,
@@ -312,7 +312,7 @@ class CloudscSplit(ImplicitTendencyComponent):
             self.cloudsc_fluxes(
                 **inputs2,
                 **outputs2,
-                dt=timestep.total_seconds(),
+                dt=self.gt4py_config.dtypes.float(timestep.total_seconds()),
                 origin=(0, 0, 0),
                 domain=self.computational_grid.grids[I, J, K - 1 / 2].shape,
                 validate_args=self.gt4py_config.validate_args,
