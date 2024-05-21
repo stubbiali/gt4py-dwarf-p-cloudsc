@@ -21,10 +21,10 @@ from typing import TYPE_CHECKING
 from cloudsc_gt4py.cloudsc import Cloudsc
 from cloudsc_gt4py.cloudsc_split import CloudscSplit
 from cloudsc_gt4py.setup import get_reference_diagnostics, get_reference_tendencies, get_state
-from cloudsc_gt4py.iox import HDF5Reader
+from cloudsc_gt4py.iox import HDF5Operator
 from ifs_physics_common.config import DomainConfig
 from ifs_physics_common.grid import ComputationalGrid
-from ifs_physics_common.h5pyx import HDF5Operator
+from ifs_physics_common.iox import HDF5GridOperator
 from ifs_physics_common.output import (
     print_performance,
     write_performance_to_csv,
@@ -44,29 +44,29 @@ else:
 
 
 def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
-    hdf5_reader = HDF5Reader(config.input_file, config.data_types)
+    hdf5_operator = HDF5Operator(config.input_file, gt4py_config=config.gt4py_config)
 
-    nx = config.num_cols or hdf5_reader.get_nlon()
-    nz = hdf5_reader.get_nlev()
+    nx = config.num_cols or hdf5_operator.get_nlon()
+    nz = hdf5_operator.get_nlev()
     computational_grid = ComputationalGrid(DomainConfig(nx=nx, ny=1, nz=nz))
 
-    hdf5_operator = HDF5Operator(
+    hdf5_grid_operator = HDF5GridOperator(
         config.input_file, computational_grid, gt4py_config=config.gt4py_config
     )
-    state = get_state(hdf5_operator)
-    dt = hdf5_reader.get_timestep()
+    state = get_state(hdf5_grid_operator)
+    dt = hdf5_operator.get_timestep()
 
-    yoecldp_paramaters = hdf5_reader.get_yoecldp_parameters()
-    yoethf_parameters = hdf5_reader.get_yoethf_parameters()
-    yomcst_parameters = hdf5_reader.get_yomcst_parameters()
-    yrecldp_parameters = hdf5_reader.get_yrecldp_parameters()
+    yoecldp_params = hdf5_operator.get_yoecldp_params()
+    yoethf_params = hdf5_operator.get_yoethf_params()
+    yomcst_params = hdf5_operator.get_yomcst_params()
+    yrecldp_params = hdf5_operator.get_yrecldp_params()
 
     cloudsc = cloudsc_cls(
         computational_grid,
-        yoecldp_paramaters,
-        yoethf_parameters,
-        yomcst_parameters,
-        yrecldp_parameters,
+        yoecldp_params,
+        yoethf_params,
+        yomcst_params,
+        yrecldp_params,
         enable_checks=config.sympl_enable_checks,
         gt4py_config=config.gt4py_config,
     )
@@ -99,11 +99,11 @@ def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
         )
 
     if config.enable_validation:
-        hdf5_operator_ref = HDF5Operator(
+        hdf5_grid_operator_ref = HDF5GridOperator(
             config.reference_file, computational_grid, gt4py_config=config.gt4py_config
         )
-        tends_ref = get_reference_tendencies(hdf5_operator_ref)
-        diags_ref = get_reference_diagnostics(hdf5_operator_ref)
+        tends_ref = get_reference_tendencies(hdf5_grid_operator_ref)
+        diags_ref = get_reference_diagnostics(hdf5_grid_operator_ref)
         print("\n== Validation:")
         validate(tends, tends_ref, atol=config.atol, rtol=config.rtol)
         validate(diags, diags_ref, atol=config.atol, rtol=config.rtol)

@@ -29,12 +29,7 @@ from ifs_physics_common.numpyx import assign
 if TYPE_CHECKING:
     from datetime import timedelta
 
-    from cloudsc_gt4py.iox import (
-        YoecldpParameters,
-        YoethfParameters,
-        YomcstParameters,
-        YrecldpParameters,
-    )
+    from cloudsc_gt4py.iox import YoecldpParams, YoethfParams, YomcstParams, YrecldpParams
     from ifs_physics_common.config import GT4PyConfig
     from ifs_physics_common.grid import ComputationalGrid
     from ifs_physics_common.typingx import NDArrayLikeDict, PropertyDict
@@ -44,10 +39,10 @@ class CloudscSplit(ImplicitTendencyComponent):
     def __init__(
         self,
         computational_grid: ComputationalGrid,
-        yoecldp_parameters: YoecldpParameters,
-        yoethf_parameters: YoethfParameters,
-        yomcst_parameters: YomcstParameters,
-        yrecldp_parameters: YrecldpParameters,
+        yoecldp_params: YoecldpParams,
+        yoethf_params: YoethfParams,
+        yomcst_params: YomcstParams,
+        yrecldp_params: YrecldpParams,
         *,
         enable_checks: bool = True,
         gt4py_config: GT4PyConfig,
@@ -56,10 +51,10 @@ class CloudscSplit(ImplicitTendencyComponent):
 
         self.nlev = self.computational_grid.grids[I, J, K].shape[2]
         externals = {}
-        externals.update(yoecldp_parameters.dict())
-        externals.update(yoethf_parameters.dict())
-        externals.update(yomcst_parameters.dict())
-        externals.update(yrecldp_parameters.dict())
+        externals.update(yoecldp_params.dict())
+        externals.update(yoethf_params.dict())
+        externals.update(yomcst_params.dict())
+        externals.update(yrecldp_params.dict())
         externals.update(
             {
                 "DEPICE": 1,
@@ -73,18 +68,18 @@ class CloudscSplit(ImplicitTendencyComponent):
                 "FALLQR": True,
                 "FALLQS": True,
                 "MELTQV": -99,
-                "MELTQL": yoecldp_parameters.NCLDQI,
-                "MELTQI": yoecldp_parameters.NCLDQR,
-                "MELTQR": yoecldp_parameters.NCLDQS,
-                "MELTQS": yoecldp_parameters.NCLDQR,
+                "MELTQL": yoecldp_params.NCLDQI,
+                "MELTQI": yoecldp_params.NCLDQR,
+                "MELTQR": yoecldp_params.NCLDQS,
+                "MELTQS": yoecldp_params.NCLDQR,
                 "NLEV": self.nlev,
                 "PHASEQV": 0,
                 "PHASEQL": 1,
                 "PHASEQI": 2,
                 "PHASEQR": 1,
                 "PHASEQS": 2,
-                "RDCP": yomcst_parameters.RD / yomcst_parameters.RCPD,
-                "RLDCP": 1 / (yoethf_parameters.RALSDCP - yoethf_parameters.RALVDCP),
+                "RDCP": yomcst_params.RD / yomcst_params.RCPD,
+                "RLDCP": 1 / (yoethf_params.RALSDCP - yoethf_params.RALVDCP),
                 "TW1": 1329.31,
                 "TW2": 0.0074615,
                 "TW3": 0.85e5,
@@ -92,9 +87,9 @@ class CloudscSplit(ImplicitTendencyComponent):
                 "TW5": 275.0,
                 "VQV": 0.0,
                 "VQL": 0.0,
-                "VQI": yrecldp_parameters.RVICE,
-                "VQR": yrecldp_parameters.RVRAIN,
-                "VQS": yrecldp_parameters.RVSNOW,
+                "VQI": yrecldp_params.RVICE,
+                "VQR": yrecldp_params.RVRAIN,
+                "VQS": yrecldp_params.RVSNOW,
                 "WARMRAIN": 2,
             }
         )

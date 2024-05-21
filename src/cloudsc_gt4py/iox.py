@@ -17,18 +17,12 @@
 from __future__ import annotations
 from datetime import timedelta
 from functools import lru_cache
-import h5py
 from pydantic import BaseModel
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Optional, Union
-
-    from ifs_physics_common.config import DataTypes
+from ifs_physics_common.iox import HDF5Operator as BaseHDF5Operator
 
 
-class YoecldpParameters(BaseModel):
+class YoecldpParams(BaseModel):
     NCLDQI: int
     NCLDQL: int
     NCLDQR: int
@@ -37,7 +31,7 @@ class YoecldpParameters(BaseModel):
     NCLV: int
 
 
-class YoethfParameters(BaseModel):
+class YoethfParams(BaseModel):
     R2ES: float
     R3IES: float
     R3LES: float
@@ -59,7 +53,7 @@ class YoethfParameters(BaseModel):
     RTWAT_RTICE_R: float
 
 
-class YomcstParameters(BaseModel):
+class YomcstParams(BaseModel):
     RCPD: float
     RD: float
     RETV: float
@@ -71,7 +65,7 @@ class YomcstParameters(BaseModel):
     RV: float
 
 
-class YrecldpParameters(BaseModel):
+class YrecldpParams(BaseModel):
     LAERICEAUTO: bool
     LAERICESED: bool
     LAERLIQAUTOCP: bool
@@ -196,17 +190,7 @@ class YrecldpParameters(BaseModel):
     RVSNOW: float
 
 
-class HDF5Reader:
-    f: h5py.File
-    data_types: DataTypes
-
-    def __init__(self, filename: str, data_types: DataTypes) -> None:
-        self.f = h5py.File(filename)
-        self.data_types = data_types
-
-    def __del__(self) -> None:
-        self.f.close()
-
+class HDF5Operator(BaseHDF5Operator):
     @lru_cache
     def get_nlev(self) -> int:
         return self.f["KLEV"][0]  # type: ignore[no-any-return]
@@ -216,50 +200,20 @@ class HDF5Reader:
         return self.f["KLON"][0]  # type: ignore[no-any-return]
 
     def get_timestep(self) -> timedelta:
-        return timedelta(seconds=float(self._get_parameter_f("PTSPHY")))
+        return timedelta(seconds=float(self.f.get("PTSPHY", [0.0])[0]))
 
-    def get_yoecldp_parameters(self) -> YoecldpParameters:
-        return YoecldpParameters(
+    def get_yoecldp_params(self) -> YoecldpParams:
+        return YoecldpParams(
             **{"NCLV": 5, "NCLDQL": 1, "NCLDQI": 2, "NCLDQR": 3, "NCLDQS": 4, "NCLDQV": 5}
         )
 
-    def get_yoethf_parameters(self) -> YoethfParameters:
-        return self._initialize_parameters(YoethfParameters)  # type: ignore[return-value]
+    def get_yoethf_params(self) -> YoethfParams:
+        return self.get_params(YoethfParams)  # type: ignore[return-value]
 
-    def get_yomcst_parameters(self) -> YomcstParameters:
-        return self._initialize_parameters(YomcstParameters)  # type: ignore[return-value]
+    def get_yomcst_params(self) -> YomcstParams:
+        return self.get_params(YomcstParams)  # type: ignore[return-value]
 
-    def get_yrecldp_parameters(self) -> YrecldpParameters:
-        return self._initialize_parameters(  # type: ignore[return-value]
-            YrecldpParameters, get_parameter_name=lambda attr_name: "YRECLDP_" + attr_name
+    def get_yrecldp_params(self) -> YrecldpParams:
+        return self.get_params(  # type: ignore[return-value]
+            YrecldpParams, get_param_name=lambda attr_name: "YRECLDP_" + attr_name
         )
-
-    def _initialize_parameters(
-        self,
-        parameter_cls: type[BaseModel],
-        get_parameter_name: Optional[Callable[[str], str]] = None,
-    ) -> BaseModel:
-        init_dict: dict[str, Union[bool, float, int]] = {}
-        for attr_name, metadata in parameter_cls.schema()["properties"].items():
-            param_name = (
-                get_parameter_name(attr_name) if get_parameter_name is not None else attr_name
-            )
-            param_type = metadata["type"]
-            if param_type == "boolean":
-                init_dict[attr_name] = self._get_parameter_b(param_name)
-            elif param_type == "number":
-                init_dict[attr_name] = self._get_parameter_f(param_name)
-            elif param_type == "integer":
-                init_dict[attr_name] = self._get_parameter_i(param_name)
-            else:
-                raise ValueError(f"Invalid parameter type `{param_type}`.")
-        return parameter_cls(**init_dict)
-
-    def _get_parameter_b(self, name: str) -> bool:
-        return self.data_types.bool(self.f.get(name, [True])[0])  # type: ignore[no-any-return]
-
-    def _get_parameter_f(self, name: str) -> float:
-        return self.data_types.float(self.f.get(name, [0.0])[0])  # type: ignore[no-any-return]
-
-    def _get_parameter_i(self, name: str) -> int:
-        return self.data_types.int(self.f.get(name, [0])[0])  # type: ignore[no-any-return]

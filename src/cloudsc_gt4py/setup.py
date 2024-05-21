@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 from ifs_physics_common.grid import D5, ExpandedDim, I, IJ, J, K
 
 if TYPE_CHECKING:
-    from ifs_physics_common.h5pyx import HDF5Operator
+    from ifs_physics_common.iox import HDF5GridOperator
     from ifs_physics_common.typingx import DataArrayDict
 
 
@@ -52,7 +52,7 @@ IJKD5_ARGS = lambda h5_name, index, units="": {
 REFERENCE_TIME = datetime(year=1970, month=1, day=1)
 
 
-def get_state(hdf5_operator: HDF5Operator) -> DataArrayDict:
+def get_state(hdf5_grid_operator: HDF5GridOperator) -> DataArrayDict:
     field_properties = {
         "b_convection_on": IJ_ARGS(h5_name="LDCUM", dtype_name="bool"),
         "f_a": IJK_ARGS(h5_name="PA"),
@@ -93,12 +93,14 @@ def get_state(hdf5_operator: HDF5Operator) -> DataArrayDict:
         "f_w": IJK_ARGS(h5_name="PVERVEL"),
         "i_convection_type": IJ_ARGS(h5_name="KTYPE", dtype_name="int"),
     }
-    state = {name: hdf5_operator.get_field(**props) for name, props in field_properties.items()}
+    state = {
+        name: hdf5_grid_operator.get_field(**props) for name, props in field_properties.items()
+    }
     state["time"] = REFERENCE_TIME
     return state
 
 
-def get_reference_tendencies(hdf5_operator: HDF5Operator) -> DataArrayDict:
+def get_reference_tendencies(hdf5_grid_operator: HDF5GridOperator) -> DataArrayDict:
     field_properties = {
         "f_a": IJK_ARGS(h5_name="TENDENCY_LOC_A", units="s^-1"),
         "f_qi": IJKD5_ARGS(h5_name="TENDENCY_LOC_CLD", units="s^-1", index=1),
@@ -108,12 +110,14 @@ def get_reference_tendencies(hdf5_operator: HDF5Operator) -> DataArrayDict:
         "f_qv": IJK_ARGS(h5_name="TENDENCY_LOC_Q", units="s^-1"),
         "f_t": IJK_ARGS(h5_name="TENDENCY_LOC_T", units="s^-1"),
     }
-    tends = {name: hdf5_operator.get_field(**props) for name, props in field_properties.items()}
+    tends = {
+        name: hdf5_grid_operator.get_field(**props) for name, props in field_properties.items()
+    }
     tends["time"] = REFERENCE_TIME
     return tends
 
 
-def get_reference_diagnostics(hdf5_operator: HDF5Operator) -> DataArrayDict:
+def get_reference_diagnostics(hdf5_grid_operator: HDF5GridOperator) -> DataArrayDict:
     field_properties = {
         "f_covptot": IJK_ARGS(h5_name="PCOVPTOT"),
         "f_fcqlng": IJK_ARGS(h5_name="PFCQLNG", dim_k=K - 1 / 2),
@@ -132,6 +136,8 @@ def get_reference_diagnostics(hdf5_operator: HDF5Operator) -> DataArrayDict:
         "f_fsqsf": IJK_ARGS(h5_name="PFSQSF", dim_k=K - 1 / 2),
         "f_rainfrac_toprfz": IJ_ARGS(h5_name="PRAINFRAC_TOPRFZ"),
     }
-    diags = {name: hdf5_operator.get_field(**props) for name, props in field_properties.items()}
+    diags = {
+        name: hdf5_grid_operator.get_field(**props) for name, props in field_properties.items()
+    }
     diags["time"] = REFERENCE_TIME
     return diags
