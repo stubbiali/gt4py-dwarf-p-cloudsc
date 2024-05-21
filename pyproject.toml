@@ -78,7 +78,7 @@ disallow_any_unimported = false
 disallow_incomplete_defs = true
 disallow_untyped_defs = true
 exclude = [
-    'src/cloudsc_gt4py/physics/_stencils/',
+    'src/cloudsc_gt4py/_stencils/',
 ]
 implicit_optional = false
 install_types = true
