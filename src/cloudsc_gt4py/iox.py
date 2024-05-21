@@ -49,8 +49,8 @@ class YoethfParams(BaseModel):
     RTICE: float
     RTICECU: float
     RTWAT: float
-    RTWAT_RTICECU_R: float
     RTWAT_RTICE_R: float
+    RTWAT_RTICECU_R: float
 
 
 class YomcstParams(BaseModel):
