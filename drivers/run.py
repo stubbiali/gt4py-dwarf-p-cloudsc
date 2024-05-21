@@ -22,7 +22,7 @@ from cloudsc_gt4py.cloudsc import Cloudsc
 from cloudsc_gt4py.cloudsc_split import CloudscSplit
 from cloudsc_gt4py.setup import get_reference_diagnostics, get_reference_tendencies, get_state
 from cloudsc_gt4py.iox import HDF5Operator
-from ifs_physics_common.config import DomainConfig
+from ifs_physics_common.config import GridConfig
 from ifs_physics_common.grid import ComputationalGrid
 from ifs_physics_common.iox import HDF5GridOperator
 from ifs_physics_common.output import (
@@ -48,7 +48,7 @@ def core(config: PythonConfig, io_config: IOConfig, cloudsc_cls: type) -> None:
 
     nx = config.num_cols or hdf5_operator.get_nlon()
     nz = hdf5_operator.get_nlev()
-    computational_grid = ComputationalGrid(DomainConfig(nx=nx, ny=1, nz=nz))
+    computational_grid = ComputationalGrid(GridConfig(nx=nx, ny=1, nz=nz))
 
     hdf5_grid_operator = HDF5GridOperator(
         config.input_file, computational_grid, gt4py_config=config.gt4py_config
