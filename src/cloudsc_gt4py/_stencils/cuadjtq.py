@@ -16,8 +16,8 @@
 
 from gt4py.cartesian import gtscript
 
-from cloudsc_gt4py.physics._stencils.fcttre import f_foedem, f_foeewm, f_foeldcpm
-from ifs_physics_common.framework.stencil import function_collection
+from cloudsc_gt4py._stencils.fcttre import f_foedem, f_foeewm, f_foeldcpm
+from ifs_physics_common.stencil import function_collection
 
 
 @function_collection("f_cuadjtq_5")

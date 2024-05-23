@@ -21,34 +21,28 @@ import numpy as np
 import sys
 from typing import TYPE_CHECKING
 
-from ifs_physics_common.framework.components import ImplicitTendencyComponent
-from ifs_physics_common.framework.grid import I, J, K
-from ifs_physics_common.framework.storage import managed_temporary_storage
-from ifs_physics_common.utils.numpyx import assign
+from ifs_physics_common.components import ImplicitTendencyComponent
+from ifs_physics_common.grid import I, J, K
+from ifs_physics_common.storage import managed_temporary_storage
+from ifs_physics_common.numpyx import assign
 
 if TYPE_CHECKING:
     from datetime import timedelta
-    from typing import Dict
 
-    from cloudsc_gt4py.utils.iox import (
-        YoecldpParameters,
-        YoethfParameters,
-        YomcstParameters,
-        YrecldpParameters,
-    )
-    from ifs_physics_common.framework.config import GT4PyConfig
-    from ifs_physics_common.framework.grid import ComputationalGrid
-    from ifs_physics_common.utils.typingx import NDArrayLikeDict, PropertyDict
+    from cloudsc_gt4py.iox import YoecldpParams, YoethfParams, YomcstParams, YrecldpParams
+    from ifs_physics_common.config import GT4PyConfig
+    from ifs_physics_common.grid import ComputationalGrid
+    from ifs_physics_common.typingx import NDArrayLikeDict, PropertyDict
 
 
 class CloudscSplit(ImplicitTendencyComponent):
     def __init__(
         self,
         computational_grid: ComputationalGrid,
-        yoecldp_parameters: YoecldpParameters,
-        yoethf_parameters: YoethfParameters,
-        yomcst_parameters: YomcstParameters,
-        yrecldp_parameters: YrecldpParameters,
+        yoecldp_params: YoecldpParams,
+        yoethf_params: YoethfParams,
+        yomcst_params: YomcstParams,
+        yrecldp_params: YrecldpParams,
         *,
         enable_checks: bool = True,
         gt4py_config: GT4PyConfig,
@@ -57,10 +51,10 @@ class CloudscSplit(ImplicitTendencyComponent):
 
         self.nlev = self.computational_grid.grids[I, J, K].shape[2]
         externals = {}
-        externals.update(yoecldp_parameters.dict())
-        externals.update(yoethf_parameters.dict())
-        externals.update(yomcst_parameters.dict())
-        externals.update(yrecldp_parameters.dict())
+        externals.update(yoecldp_params.dict())
+        externals.update(yoethf_params.dict())
+        externals.update(yomcst_params.dict())
+        externals.update(yrecldp_params.dict())
         externals.update(
             {
                 "DEPICE": 1,
@@ -74,18 +68,18 @@ class CloudscSplit(ImplicitTendencyComponent):
                 "FALLQR": True,
                 "FALLQS": True,
                 "MELTQV": -99,
-                "MELTQL": yoecldp_parameters.NCLDQI,
-                "MELTQI": yoecldp_parameters.NCLDQR,
-                "MELTQR": yoecldp_parameters.NCLDQS,
-                "MELTQS": yoecldp_parameters.NCLDQR,
+                "MELTQL": yoecldp_params.NCLDQI,
+                "MELTQI": yoecldp_params.NCLDQR,
+                "MELTQR": yoecldp_params.NCLDQS,
+                "MELTQS": yoecldp_params.NCLDQR,
                 "NLEV": self.nlev,
                 "PHASEQV": 0,
                 "PHASEQL": 1,
                 "PHASEQI": 2,
                 "PHASEQR": 1,
                 "PHASEQS": 2,
-                "RDCP": yomcst_parameters.RD / yomcst_parameters.RCPD,
-                "RLDCP": 1 / (yoethf_parameters.RALSDCP - yoethf_parameters.RALVDCP),
+                "RDCP": yomcst_params.RD / yomcst_params.RCPD,
+                "RLDCP": 1 / (yoethf_params.RALSDCP - yoethf_params.RALVDCP),
                 "TW1": 1329.31,
                 "TW2": 0.0074615,
                 "TW3": 0.85e5,
@@ -93,9 +87,9 @@ class CloudscSplit(ImplicitTendencyComponent):
                 "TW5": 275.0,
                 "VQV": 0.0,
                 "VQL": 0.0,
-                "VQI": yrecldp_parameters.RVICE,
-                "VQR": yrecldp_parameters.RVRAIN,
-                "VQS": yrecldp_parameters.RVSNOW,
+                "VQI": yrecldp_params.RVICE,
+                "VQR": yrecldp_params.RVRAIN,
+                "VQS": yrecldp_params.RVSNOW,
                 "WARMRAIN": 2,
             }
         )
@@ -104,79 +98,79 @@ class CloudscSplit(ImplicitTendencyComponent):
         self.cloudsc_fluxes = self.compile_stencil("cloudsc_fluxes", externals)
 
     @cached_property
-    def _input_properties(self) -> PropertyDict:
+    def input_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "b_convection_on": {"grid": (I, J), "units": ""},
-            "f_a": {"grid": (I, J, K), "units": ""},
-            "f_ap": {"grid": (I, J, K), "units": ""},
-            "f_aph": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_ccn": {"grid": (I, J, K), "units": ""},
-            "f_hrlw": {"grid": (I, J, K), "units": ""},
-            "f_hrsw": {"grid": (I, J, K), "units": ""},
-            "f_icrit_aer": {"grid": (I, J, K), "units": ""},
-            "f_lcrit_aer": {"grid": (I, J, K), "units": ""},
-            "f_lsm": {"grid": (I, J), "units": ""},
-            "f_lu": {"grid": (I, J, K), "units": ""},
-            "f_lude": {"grid": (I, J, K), "units": ""},
-            "f_mfd": {"grid": (I, J, K), "units": ""},
-            "f_mfu": {"grid": (I, J, K), "units": ""},
-            "f_nice": {"grid": (I, J, K), "units": ""},
-            "f_qi": {"grid": (I, J, K), "units": ""},
-            "f_ql": {"grid": (I, J, K), "units": ""},
-            "f_qr": {"grid": (I, J, K), "units": ""},
-            "f_qs": {"grid": (I, J, K), "units": ""},
-            "f_qv": {"grid": (I, J, K), "units": ""},
-            "f_re_ice": {"grid": (I, J, K), "units": ""},
-            "f_snde": {"grid": (I, J, K), "units": ""},
-            "f_supsat": {"grid": (I, J, K), "units": ""},
-            "f_t": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_a": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qi": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_ql": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qr": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qs": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_qv": {"grid": (I, J, K), "units": ""},
-            "f_tnd_tmp_t": {"grid": (I, J, K), "units": ""},
-            "f_vfi": {"grid": (I, J, K), "units": ""},
-            "f_vfl": {"grid": (I, J, K), "units": ""},
-            "f_w": {"grid": (I, J, K), "units": ""},
-            "i_convection_type": {"grid": (I, J), "units": ""},
+            "b_convection_on": {"grid_dims": (I, J), "dtype_name": "bool", "units": ""},
+            "f_a": {"grid_dims": (I, J, K), "units": ""},
+            "f_ap": {"grid_dims": (I, J, K), "units": ""},
+            "f_aph": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_ccn": {"grid_dims": (I, J, K), "units": ""},
+            "f_hrlw": {"grid_dims": (I, J, K), "units": ""},
+            "f_hrsw": {"grid_dims": (I, J, K), "units": ""},
+            "f_icrit_aer": {"grid_dims": (I, J, K), "units": ""},
+            "f_lcrit_aer": {"grid_dims": (I, J, K), "units": ""},
+            "f_lsm": {"grid_dims": (I, J), "units": ""},
+            "f_lu": {"grid_dims": (I, J, K), "units": ""},
+            "f_lude": {"grid_dims": (I, J, K), "units": ""},
+            "f_mfd": {"grid_dims": (I, J, K), "units": ""},
+            "f_mfu": {"grid_dims": (I, J, K), "units": ""},
+            "f_nice": {"grid_dims": (I, J, K), "units": ""},
+            "f_qi": {"grid_dims": (I, J, K), "units": ""},
+            "f_ql": {"grid_dims": (I, J, K), "units": ""},
+            "f_qr": {"grid_dims": (I, J, K), "units": ""},
+            "f_qs": {"grid_dims": (I, J, K), "units": ""},
+            "f_qv": {"grid_dims": (I, J, K), "units": ""},
+            "f_re_ice": {"grid_dims": (I, J, K), "units": ""},
+            "f_snde": {"grid_dims": (I, J, K), "units": ""},
+            "f_supsat": {"grid_dims": (I, J, K), "units": ""},
+            "f_t": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_a": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qi": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_ql": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qr": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qs": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_qv": {"grid_dims": (I, J, K), "units": ""},
+            "f_tnd_tmp_t": {"grid_dims": (I, J, K), "units": ""},
+            "f_vfi": {"grid_dims": (I, J, K), "units": ""},
+            "f_vfl": {"grid_dims": (I, J, K), "units": ""},
+            "f_w": {"grid_dims": (I, J, K), "units": ""},
+            "i_convection_type": {"grid_dims": (I, J), "dtype_name": "int", "units": ""},
         }
 
     @cached_property
-    def _tendency_properties(self) -> PropertyDict:
+    def tendency_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "f_a": {"grid": (I, J, K), "units": "s^-1"},
-            "f_t": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qv": {"grid": (I, J, K), "units": "s^-1"},
-            "f_ql": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qi": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qr": {"grid": (I, J, K), "units": "s^-1"},
-            "f_qs": {"grid": (I, J, K), "units": "s^-1"},
+            "f_a": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_t": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qv": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_ql": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qi": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qr": {"grid_dims": (I, J, K), "units": "s^-1"},
+            "f_qs": {"grid_dims": (I, J, K), "units": "s^-1"},
         }
 
     @cached_property
-    def _diagnostic_properties(self) -> PropertyDict:
+    def diagnostic_grid_properties(self) -> PropertyDict:
         # todo(stubbiali): sort out units
         return {
-            "f_covptot": {"grid": (I, J, K), "units": ""},
-            "f_fcqlng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqnng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqrng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fcqsng": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fhpsl": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fhpsn": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fplsl": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fplsn": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqif": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqitur": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqlf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqltur": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqrf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_fsqsf": {"grid": (I, J, K - 1 / 2), "units": ""},
-            "f_rainfrac_toprfz": {"grid": (I, J), "units": ""},
+            "f_covptot": {"grid_dims": (I, J, K), "units": ""},
+            "f_fcqlng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqnng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqrng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fcqsng": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fhpsl": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fhpsn": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fplsl": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fplsn": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqif": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqitur": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqlf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqltur": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqrf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_fsqsf": {"grid_dims": (I, J, K - 1 / 2), "units": ""},
+            "f_rainfrac_toprfz": {"grid_dims": (I, J), "units": ""},
         }
 
     def array_call(
@@ -185,13 +179,13 @@ class CloudscSplit(ImplicitTendencyComponent):
         timestep: timedelta,
         out_tendencies: NDArrayLikeDict,
         out_diagnostics: NDArrayLikeDict,
-        overwrite_tendencies: Dict[str, bool],
+        overwrite_tendencies: dict[str, bool],
     ) -> None:
         with managed_temporary_storage(
             self.computational_grid,
             *repeat(((I, J), "float"), 6),
             ((I, J), "bool"),
-            ((K,), "int"),
+            ((K - 1 / 2,), "int"),
             *repeat(((I, J, K), "float"), 18),
             gt4py_config=self.gt4py_config,
         ) as (
@@ -277,7 +271,7 @@ class CloudscSplit(ImplicitTendencyComponent):
                 **tendencies,
                 **diagnostics1,
                 **temporaries,
-                dt=timestep.total_seconds(),
+                dt=self.gt4py_config.dtypes.float(timestep.total_seconds()),
                 origin=(0, 0, 0),
                 domain=self.computational_grid.grids[I, J, K].shape,
                 validate_args=self.gt4py_config.validate_args,
@@ -313,7 +307,7 @@ class CloudscSplit(ImplicitTendencyComponent):
             self.cloudsc_fluxes(
                 **inputs2,
                 **outputs2,
-                dt=timestep.total_seconds(),
+                dt=self.gt4py_config.dtypes.float(timestep.total_seconds()),
                 origin=(0, 0, 0),
                 domain=self.computational_grid.grids[I, J, K - 1 / 2].shape,
                 validate_args=self.gt4py_config.validate_args,
